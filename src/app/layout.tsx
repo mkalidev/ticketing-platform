@@ -1,21 +1,26 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
 import { QueryProvider } from "@/providers/QueryProvider";
+import { Header } from "@/components/layout/Header";
+import { Footer } from "@/components/layout/Footer";
 import "./globals.css";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
-
 export const metadata: Metadata = {
-  title: "Ticketing Platform",
-  description: "A modern ticketing platform built with Next.js",
+  title: "Tixly | Modern Ticketing Platform",
+  description: "The modern ticketing platform for unforgettable experiences. Simple for organizers, seamless for attendees.",
+  keywords: ["tickets", "events", "concerts", "festivals", "conferences", "ticketing platform"],
+  authors: [{ name: "Tixly" }],
+  openGraph: {
+    title: "Tixly | Modern Ticketing Platform",
+    description: "The modern ticketing platform for unforgettable experiences.",
+    type: "website",
+    locale: "en_US",
+    siteName: "Tixly",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Tixly | Modern Ticketing Platform",
+    description: "The modern ticketing platform for unforgettable experiences.",
+  },
 };
 
 export default function RootLayout({
@@ -24,11 +29,15 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-      >
-        <QueryProvider>{children}</QueryProvider>
+    <html lang="en" className="dark">
+      <body className="bg-mesh min-h-screen flex flex-col antialiased">
+        <QueryProvider>
+          <Header />
+          <main className="flex-1 pt-16 md:pt-20">
+            {children}
+          </main>
+          <Footer />
+        </QueryProvider>
       </body>
     </html>
   );
