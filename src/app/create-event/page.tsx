@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { Button, Card, Input, Badge } from '@/components/ui';
 import {
   ArrowLeftIcon,
@@ -23,6 +24,8 @@ type Step = 'basics' | 'details' | 'tickets' | 'review';
 
 export default function CreateEventPage() {
   const [currentStep, setCurrentStep] = useState<Step>('basics');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [apiError, setApiError] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     // Basics
     name: '',
@@ -57,14 +60,15 @@ export default function CreateEventPage() {
     { id: 'review', label: 'Review', icon: <CheckIcon size={18} /> },
   ];
 
-  const currentStepIndex = steps.findIndex(s => s.id === currentStep);
+  const currentStepIndex = steps.findIndex((s) => s.id === currentStep);
+  const router = useRouter();
 
   const handleInputChange = (field: string, value: string) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
+    setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
   const handleTicketChange = (index: number, field: string, value: string) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
       tickets: prev.tickets.map((ticket, i) => 
         i === index ? { ...ticket, [field]: value } : ticket
@@ -73,7 +77,7 @@ export default function CreateEventPage() {
   };
 
   const addTicketType = () => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
       tickets: [
         ...prev.tickets,
@@ -105,6 +109,32 @@ export default function CreateEventPage() {
   };
 
   const categories = Object.values(EventCategory);
+
+  const handlePublish = async () => {
+    setApiError(null);
+    setIsSubmitting(true);
+
+    try {
+      const res = await fetch('/api/events', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok || !data.success) {
+        setApiError(data.error?.message || 'Failed to create event. Please try again.');
+        setIsSubmitting(false);
+        return;
+      }
+
+      router.push(`/events/${data.data.slug}`);
+    } catch {
+      setApiError('Something went wrong while creating the event.');
+      setIsSubmitting(false);
+    }
+  };
 
   return (
     <div className="min-h-screen py-8">
@@ -424,6 +454,12 @@ export default function CreateEventPage() {
               <div className="space-y-6 animate-fade-in">
                 <Card>
                   <h2 className="text-h3 text-[var(--text-primary)] mb-6">Review Your Event</h2>
+
+                  {apiError && (
+                    <p className="mb-4 text-sm text-[var(--accent-error)] bg-[var(--accent-error)]/10 border border-[var(--accent-error)]/40 rounded-lg px-3 py-2">
+                      {apiError}
+                    </p>
+                  )}
                   
                   <div className="space-y-6">
                     {/* Basics */}
@@ -505,7 +541,7 @@ export default function CreateEventPage() {
                     <Button variant="secondary">
                       Save as Draft
                     </Button>
-                    <Button variant="primary">
+                    <Button variant="primary" onClick={handlePublish} isLoading={isSubmitting}>
                       Publish Event
                     </Button>
                   </div>

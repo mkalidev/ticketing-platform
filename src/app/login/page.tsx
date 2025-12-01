@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { Button, Input, Card } from '@/components/ui';
 import { LogoIcon } from '@/components/icons';
 
@@ -12,6 +13,7 @@ import { LogoIcon } from '@/components/icons';
 export default function LoginPage() {
   const [isLogin, setIsLogin] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
+  const [apiError, setApiError] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -20,6 +22,7 @@ export default function LoginPage() {
     confirmPassword: '',
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const router = useRouter();
 
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -52,12 +55,35 @@ export default function LoginPage() {
     if (!validate()) return;
 
     setIsLoading(true);
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    setIsLoading(false);
-    
-    // Redirect to home or dashboard
-    window.location.href = '/';
+    setApiError(null);
+
+    try {
+      const endpoint = isLogin ? '/api/auth/login' : '/api/auth/register';
+      const res = await fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: formData.email,
+          password: formData.password,
+          firstName: formData.firstName,
+          lastName: formData.lastName,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok || !data.success) {
+        setApiError(data.error?.message || 'Authentication failed. Please try again.');
+        setIsLoading(false);
+        return;
+      }
+
+      // On success, redirect to dashboard
+      router.push('/dashboard');
+    } catch {
+      setApiError('Something went wrong. Please try again.');
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -109,6 +135,11 @@ export default function LoginPage() {
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
+            {apiError && (
+              <p className="text-sm text-[var(--accent-error)] bg-[var(--accent-error)]/10 border border-[var(--accent-error)]/40 rounded-lg px-3 py-2">
+                {apiError}
+              </p>
+            )}
             {!isLogin && (
               <div className="grid grid-cols-2 gap-4">
                 <Input
