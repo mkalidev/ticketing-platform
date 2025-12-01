@@ -33,7 +33,8 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const token = signAuthToken({ sub: userDoc._id as string, email: userDoc.email as string });
+    const userId = String(userDoc._id);
+    const token = signAuthToken({ sub: userId, email: String(userDoc.email) });
 
     const res = NextResponse.json({ success: true, data: { user: mapUserFromDoc(userDoc) } });
     res.cookies.set('tixly_token', token, {
