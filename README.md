@@ -1,36 +1,134 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+## Tixly – Modern Ticketing Platform
 
-## Getting Started
+Tixly is a venture‑scale ticketing platform built on **Next.js 16 (App Router)** with a **minimal, premium UI** designed to impress event organizers, attendees, and investors.
 
-First, run the development server:
+- **Organizers**: create events, configure ticket types, and view a dashboard with sales insights.
+- **Attendees**: discover events, buy tickets via a modern checkout, and manage tickets in a dedicated area.
+- **Platform**: MongoDB‑backed auth and event storage, ready to evolve into a full SaaS product.
+
+---
+
+## Tech Stack
+
+- **Framework**: Next.js 16 (App Router)
+- **UI**: Tailwind CSS 4, custom design system (globals in `src/app/globals.css`)
+- **State / Data**: React Query (configured provider), typed domain models in `src/types`
+- **Auth**: Email + password with bcrypt & JWT (httpOnly cookie)
+- **Database**: MongoDB (official Node driver)
+
+Key directories:
+
+- `src/app` – pages, routes, and API endpoints
+- `src/components` – reusable UI, layout, and event components
+- `src/data/mock-events.ts` – rich mock event data for the public experience
+- `src/lib` – MongoDB client, auth helpers, formatting utilities
+
+---
+
+## Features Overview
+
+- **Homepage**: hero search, featured events, categories, stats, organizer CTA.
+- **Event discovery**: `/events` with search, filters, and sorting.
+- **Event detail**: `/events/[slug]` with rich content and ticket selection sidebar.
+- **Checkout**: `/checkout` multi‑step flow (contact + payment UI, mocked payment).
+- **Auth**: `/login` for sign‑in / sign‑up wired to API (`/api/auth/login`, `/api/auth/register`).
+- **Organizer dashboard**: `/dashboard` with stats, recent sales, and event list.
+- **Create event**: `/create-event` multi‑step wizard posting to `/api/events`.
+- **My tickets**: `/my-tickets` with upcoming/past tickets and QR code modal.
+
+---
+
+## Environment Setup
+
+Create a `.env.local` file in the project root:
+
+```bash
+MONGODB_URI="your-mongodb-connection-string"
+MONGODB_DB="tixly"
+JWT_SECRET="a-long-random-secret-string"
+```
+
+- `MONGODB_URI`: standard Mongo connection URI (Atlas or self‑hosted).
+- `MONGODB_DB`: database name (defaults to `tixly` if omitted).
+- `JWT_SECRET`: a long, random string used to sign auth tokens.
+
+---
+
+## Installation & Scripts
+
+Install dependencies:
+
+```bash
+npm install
+```
+
+Run the dev server:
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Build for production:
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+npm run build
+npm start
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Lint:
 
-## Learn More
+```bash
+npm run lint
+```
 
-To learn more about Next.js, take a look at the following resources:
+> `npm run dev:watch` will run the dev server together with an auto‑commit script. For normal development, prefer `npm run dev`.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+---
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Auth Flows (High Level)
 
-## Deploy on Vercel
+- **Register**: `POST /api/auth/register`
+  - Validates input, hashes password with bcrypt, stores user in `users` collection.
+  - Returns user payload and sets a `tixly_token` httpOnly cookie (JWT).
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+- **Login**: `POST /api/auth/login`
+  - Verifies email/password, signs JWT, and sets `tixly_token` cookie.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- **Session**: server helpers in `src/lib/auth.ts` read and verify the JWT to fetch the current user.
+
+---
+
+## Event Creation & Storage
+
+- Client‑side event creation wizard lives at `/create-event`.
+- On publish it calls `POST /api/events` with the form payload.
+- The API route:
+  - Requires a valid logged‑in user.
+  - Normalizes basic fields (name, slug, dates, venue).
+  - Stores the event in the `events` collection with `status = draft`.
+
+The public experience still uses rich mock events for a polished demo while the MongoDB‑backed flow is ready for real data.
+
+---
+
+## Running Locally
+
+1. Ensure MongoDB is reachable and your `.env.local` is configured.
+2. Install dependencies with `npm install`.
+3. Start the dev server with `npm run dev`.
+4. Visit `http://localhost:3000`:
+   - Try creating an account via `/login`.
+   - Create an event via `/create-event`.
+   - Explore the event discovery flow and organizer dashboard.
+
+---
+
+## Deployment
+
+This project is designed to deploy cleanly on platforms that support Next.js:
+
+- Set the same environment variables (`MONGODB_URI`, `MONGODB_DB`, `JWT_SECRET`) in your hosting provider.
+- Use `npm run build` as the build command and `npm start` (or platform default) as the start command.
+
+On Vercel, most defaults “just work”; configure your env vars and hit deploy.
+
