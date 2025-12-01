@@ -4,15 +4,16 @@ import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
+import { useAppKit } from '@reown/appkit/react';
 import { Button, Card, Input, Badge } from '@/components/ui';
-import { 
-  ArrowLeftIcon, 
-  CalendarIcon, 
-  MapPinIcon, 
+import {
+  ArrowLeftIcon,
+  CalendarIcon,
+  MapPinIcon,
   TicketIcon,
   CreditCardIcon,
   CheckIcon,
-  ClockIcon
+  ClockIcon,
 } from '@/components/icons';
 import { getEventById } from '@/data/mock-events';
 import { TicketType } from '@/types';
@@ -30,6 +31,7 @@ function CheckoutContent() {
   const [step, setStep] = useState(1);
   const [isProcessing, setIsProcessing] = useState(false);
   const [orderComplete, setOrderComplete] = useState(false);
+  const { open } = useAppKit();
   
   // Form state
   const [formData, setFormData] = useState({
@@ -347,6 +349,22 @@ function CheckoutContent() {
                     Tickets for <span className="text-[var(--text-primary)]">{formData.firstName} {formData.lastName}</span>
                   </p>
                   <p className="text-sm text-[var(--text-secondary)]">{formData.email}</p>
+                </div>
+
+                {/* Connect Wallet */}
+                <div className="mb-6 space-y-2">
+                  <Button
+                    variant="secondary"
+                    size="lg"
+                    fullWidth
+                    type="button"
+                    onClick={() => open()}
+                  >
+                    Connect Wallet
+                  </Button>
+                  <p className="text-xs text-center text-[var(--text-muted)]">
+                    Connect your wallet to complete this purchase using Web3.
+                  </p>
                 </div>
 
                 <div className="space-y-4">
