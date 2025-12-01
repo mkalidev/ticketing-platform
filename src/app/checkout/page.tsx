@@ -15,6 +15,7 @@ import {
   ClockIcon
 } from '@/components/icons';
 import { getEventById } from '@/data/mock-events';
+import { TicketType } from '@/types';
 import { formatCurrency, formatDate, formatTime, cn } from '@/lib/utils';
 
 // ==========================================
@@ -46,20 +47,32 @@ function CheckoutContent() {
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   const event = eventId ? getEventById(eventId) : null;
-  const selectedTickets: Record<string, number> = ticketsParam ? JSON.parse(decodeURIComponent(ticketsParam)) : {};
+
+  let selectedTickets: Record<string, number> = {};
+  if (ticketsParam) {
+    try {
+      selectedTickets = JSON.parse(decodeURIComponent(ticketsParam));
+    } catch {
+      selectedTickets = {};
+    }
+  }
+
+  type CheckoutItem = { ticketType: TicketType; quantity: number; subtotal: number };
 
   // Calculate totals
-  const items = Object.entries(selectedTickets)
-    .map(([ticketId, quantity]) => {
-      const ticketType = event?.ticketTypes.find(t => t.id === ticketId);
-      if (!ticketType || quantity === 0) return null;
-      return {
-        ticketType,
-        quantity,
-        subtotal: ticketType.price * quantity,
-      };
-    })
-    .filter(Boolean) as { ticketType: typeof event.ticketTypes[0]; quantity: number; subtotal: number }[];
+  const items: CheckoutItem[] = event
+    ? Object.entries(selectedTickets)
+        .map(([ticketId, quantity]) => {
+          const ticketType = event.ticketTypes.find((t) => t.id === ticketId);
+          if (!ticketType || quantity === 0) return null;
+          return {
+            ticketType,
+            quantity,
+            subtotal: ticketType.price * quantity,
+          };
+        })
+        .filter((item): item is CheckoutItem => item !== null)
+    : [];
 
   const subtotal = items.reduce((sum, item) => sum + item.subtotal, 0);
   const serviceFee = subtotal * 0.025 + items.reduce((sum, item) => sum + item.quantity, 0) * 0.99;
