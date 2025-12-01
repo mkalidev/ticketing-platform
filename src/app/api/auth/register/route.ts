@@ -34,7 +34,6 @@ export async function POST(req: NextRequest) {
     const now = new Date().toISOString();
 
     const userDoc = {
-      _id: crypto.randomUUID(),
       email: email.toLowerCase(),
       firstName,
       lastName,
@@ -43,11 +42,15 @@ export async function POST(req: NextRequest) {
       emailVerified: false,
     };
 
-    await users.insertOne(userDoc);
+    const result = await users.insertOne(userDoc);
+    const userId = String(result.insertedId);
 
-    const token = signAuthToken({ sub: userDoc._id, email: userDoc.email });
+    const token = signAuthToken({ sub: userId, email: userDoc.email });
 
-    const res = NextResponse.json({ success: true, data: { user: mapUserFromDoc(userDoc) } });
+    const res = NextResponse.json({
+      success: true,
+      data: { user: mapUserFromDoc({ ...userDoc, _id: userId }) },
+    });
     res.cookies.set('tixly_token', token, {
       httpOnly: true,
       sameSite: 'lax',
